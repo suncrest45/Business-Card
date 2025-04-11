@@ -1,6 +1,11 @@
 let width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
+let cards = {};
+let names = new Object();
+let count = 0;
+
+
 console.log(width);
 console.log(height);
 
@@ -10,13 +15,35 @@ const svg = d3.select("#card-area")
               .attr("width", width)
               .attr("height", height);
 
-// Add a rectangle
-let card = svg.append("image")
-   .attr("xlink:href", "../Data/Bottom_Top_back.jpg")
-   .attr("x", 0)          // x-coordinate
-   .attr("y", 0)          // y-coordinate
-   .attr("width", 1)      // rectangle width
-   .attr("height", 1)     // rectangle height
+
+async function readCSV(csvFilePath) {
+
+   try {
+      const data = await d3.csv(csvFilePath);
+      data.forEach(function(d){
+         names[String(d.Name)] = Number(count);
+         let card = svg.append("image")
+            .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
+            .attr("x", 0)            // x-coordinate
+            .attr("y", 0)            // y-coordinate
+            .attr("width", 500)      // rectangle width
+            .attr("height", 500)     // rectangle height
+            .attr("preserveAspectRation", "none");
+         cards[count] = card;
+         console.log("count: ", count);
+         count++;
+      })
+
+      return data;
+      
+   } catch (error) {
+      console.error("Error reading csv:", error);
+      return [];
+   }
+   
+}
+
+
 
 // Function to resize rectangle based on window size
 function resize() {
@@ -29,11 +56,12 @@ function resize() {
     svg.attr("width", width)
        .attr("height", height);
 
-    card.attr("x", 0)                   // x-coordinate
+    cards[0].attr("x", 0)                   // x-coordinate
         .attr("y", 0)                 // y-coordinate
         .attr("transform", "scale(" + relWidth + "," + relHeight + ")")
 }
 
+readCSV("../Data/Business Cards.csv");
 resize();
 
 window.addEventListener("resize", resize);
