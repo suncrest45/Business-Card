@@ -41,6 +41,21 @@ async function readCSV(csvFilePath) {
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
             .attr("preserveAspectRation", "xMidYMid slice");
+
+            card.on('mouseover', function(d) {
+               console.log(this);
+               d3.select(this)
+               .transition()
+               .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
+            });
+
+            card.on('mouseout', function(d) {
+               console.log(this);
+               d3.select(this)
+               .transition()
+               .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
+            });
+
          cards[index] = card;
          console.log("count: ", count);
          count++;
