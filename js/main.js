@@ -167,8 +167,8 @@ function resize() {
       selectedCard
          .attr("x", centerX)  // x-coordinate
          .attr("y", centerY) // y-coordinate
-         // .attr("width", cardWidth)      // rectangle width
-         // .attr("height", cardHeight)     // rectangle height
+         .attr("width", cardWidth)      // rectangle width
+         .attr("height", cardHeight)     // rectangle height
    }
    else 
    {
