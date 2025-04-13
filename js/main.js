@@ -5,6 +5,7 @@ let cards = {};
 let names = new Object();
 let count = 0;
 
+// Card details
 const cardsPerRow = 5;
 const cardSpacing = 10;
 const speed = 0.5; // pixels per frame; adjust for faster/slower motion
@@ -14,8 +15,8 @@ let cardHeight = 0;
 
 let cardGroup;
 
-console.log(svgWidth);
-console.log(svgHeight);
+// A flag to pause the conveyor belt
+let isPaused = false;
 
 // Append SVG to the container
 const svg = d3.select("#card-area")
@@ -52,14 +53,14 @@ async function readCSV(csvFilePath) {
             .attr("preserveAspectRation", "xMidYMid slice");
 
             card.on('mouseover', function(d) {
-               console.log(this);
+               isPaused = true;
                d3.select(this)
                .transition()
                .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
             });
 
             card.on('mouseout', function(d) {
-               console.log(this);
+               isPaused = false;
                d3.select(this)
                .transition()
                .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
@@ -80,17 +81,20 @@ async function readCSV(csvFilePath) {
 }
 
 function animate() {
+
    d3.timer(() => {
-       offset -= speed;
 
-       const totalWidth = (cardWidth + cardSpacing) * cardsPerRow;
+      if (isPaused) return;
+      offset -= speed;
 
-       // If we've scrolled past one full row of cards, reset offset
-       if (Math.abs(offset) > totalWidth) {
-           offset = 0;
-       }
+      const totalWidth = (cardWidth + cardSpacing) * cardsPerRow;
 
-       cardGroup.attr("transform", `translate(${offset}, 0)`);
+      // If we've scrolled past one full row of cards, reset offset
+      if (Math.abs(offset) > totalWidth) {
+         offset = 0;
+      }
+
+      cardGroup.attr("transform", `translate(${offset}, 0)`);
    });
 }
 
