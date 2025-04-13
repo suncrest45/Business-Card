@@ -7,6 +7,12 @@ let count = 0;
 
 const cardsPerRow = 5;
 const cardSpacing = 10;
+const speed = 0.5; // pixels per frame; adjust for faster/slower motion
+let offset = 0;
+let cardWidth = 0;
+let cardHeight = 0;
+
+let cardGroup;
 
 console.log(svgWidth);
 console.log(svgHeight);
@@ -17,14 +23,17 @@ const svg = d3.select("#card-area")
               .attr("width", svgWidth)
               .attr("height", svgHeight);
 
+// Create the <g> group that will hold all cards
+cardGroup = svg.append("g");
+
 
 async function readCSV(csvFilePath) {
 
    try {
       const data = await d3.csv(csvFilePath);
 
-      const cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
-      const cardHeight = cardWidth; // Assuming the cards are square
+      cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
+      cardHeight = cardWidth; // Assuming the cards are square
 
 
       data.forEach(function(d, index){
@@ -34,7 +43,7 @@ async function readCSV(csvFilePath) {
 
          names[String(d.Name)] = index;
          
-         let card = svg.append("image")
+         let card = cardGroup.append("image")
             .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
             .attr("x", col * (cardWidth + cardSpacing))  // x-coordinate
             .attr("y", row * (cardHeight + cardSpacing)) // y-coordinate
@@ -70,6 +79,21 @@ async function readCSV(csvFilePath) {
    
 }
 
+function animate() {
+   d3.timer(() => {
+       offset -= speed;
+
+       const totalWidth = (cardWidth + cardSpacing) * cardsPerRow;
+
+       // If we've scrolled past one full row of cards, reset offset
+       if (Math.abs(offset) > totalWidth) {
+           offset = 0;
+       }
+
+       cardGroup.attr("transform", `translate(${offset}, 0)`);
+   });
+}
+
 
 
 // Function to resize rectangle based on window size
@@ -77,8 +101,8 @@ function resize() {
     svgWidth = window.innerWidth;
     svgHeight = window.innerHeight;
 
-    const cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
-    const cardHeight = cardWidth;
+   cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
+   cardHeight = cardWidth;
 
 
     svg.attr("width", svgWidth)
@@ -98,6 +122,7 @@ function resize() {
 
 readCSV("../Data/Business Cards.csv").then(() => {
    resize(); // ensure correct sizing after load
+   animate();
    window.addEventListener("resize", resize);
 });
 
