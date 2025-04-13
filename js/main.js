@@ -5,6 +5,7 @@ let cards = {};
 let names = new Object();
 let count = 0;
 
+// Card details
 const cardsPerRow = 5;
 const cardSpacing = 10;
 const speed = 0.5; // pixels per frame; adjust for faster/slower motion
@@ -14,8 +15,8 @@ let cardHeight = 0;
 
 let cardGroup;
 
-console.log(svgWidth);
-console.log(svgHeight);
+// A flag to pause the conveyor belt
+let isPaused = false;
 
 // Append SVG to the container
 const svg = d3.select("#card-area")
@@ -87,14 +88,17 @@ async function readCSV(csvFilePath) {
 }
 
 function animate() {
+
    d3.timer(() => {
+
+      if (isPaused) return;
       offset -= speed;
 
       const totalWidth = (cardWidth + cardSpacing) * cardsPerRow;
 
       // If we've scrolled past one full row of cards, reset offset
       if (Math.abs(offset) > totalWidth) {
-            offset = 0;
+         offset = 0;
       }
 
       cardGroup.attr("transform", `translate(${offset}, 0)`);
