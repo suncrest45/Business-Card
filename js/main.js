@@ -93,19 +93,19 @@ async function readCSV(csvFilePath) {
                   cardPos[1] = card.attr("y");
                   cardDims[0] = card.attr("width");
                   cardDims[1] = card.attr("height");
-                  cardWidth = svgWidth / 2.5;
-                  cardHeight = cardWidth * 0.5714;
                   selectedCard
                      .attr("x", centerX)             // x-coordinate
-                     .attr("y", centerY)             // y-coordinate
-                     .attr("width", cardWidth)       // rectangle width
-                     .attr("height", cardHeight)     // rectangle height
-                     .attr("transform", "translate(0,"+ -offset + ")");
+                     .attr("y", centerY - offset);             // y-coordinate
                   break;
                case 2:
                   d3.select(this)
                      .transition()
-                     .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
+                     .duration(500)
+                     .attr("transform", `translate(${svgWidth / 2.0 - 0.5}, ${svgHeight / 2.0 - 0.5}) scale(${1/cardWidth}, ${1/cardHeight})`)
+                     .transition()
+                     .duration(500)
+                     .attr("transform", `scale(${cardWidth / d3.select(this).attr("width")}, ${cardHeight / d3.select(this).attr("height")}) `)
+                     .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg");
                   break;
                case 3:
                   d3.select(this)
