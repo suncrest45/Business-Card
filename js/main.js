@@ -41,6 +41,10 @@ async function readCSV(csvFilePath) {
       cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
       cardHeight = cardWidth; // Assuming the cards are square
 
+      const numRows = Math.ceil(data.length / cardsPerRow);
+      svgHeight = numRows * (cardHeight + cardSpacing);
+      svg.attr("height", svgHeight);
+
 
       data.forEach(function(d, index) {
          const row = Math.floor(index / cardsPerRow);
@@ -168,6 +172,9 @@ function resize() {
 
    cardWidth = (svgWidth - (cardsPerRow - 1) * cardSpacing) / cardsPerRow;
    cardHeight = cardWidth;
+
+   svgHeight = Math.ceil(count / cardsPerRow) * (cardHeight + cardSpacing);
+   svg.attr("height", svgHeight);
 
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
