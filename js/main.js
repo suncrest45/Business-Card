@@ -120,7 +120,7 @@ const filter = defs.append("filter")
    .attr("x", "-50%")
    .attr("y", "-50%")
    .attr("width", "200%")
-   .attr("height", "200%");
+
 
 filter.append("feDropShadow")
    .attr("dx", 5)
@@ -217,6 +217,9 @@ function resize() {
 
    cardWidth = svgWidth / xScale;
    cardHeight = cardWidth * 0.5714;
+
+   svgHeight = Math.ceil(count / cardsPerRow) * (cardHeight + cardSpacing);
+   svg.attr("height", svgHeight);
 
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
