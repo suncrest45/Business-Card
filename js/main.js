@@ -3,26 +3,22 @@ let svgHeight = window.innerHeight;
 
 let cards = {};
 let names = new Object();
-let count = 0;
+let currIndex = 0;
+let prevIndex = 0;
+let nextIndex = 0;
+let isFlipped = false;
 
-// Card details
-const cardsPerRow = 5;
-const cardSpacing = 10;
+let xScale = 3;
+
 const speed = 0.5; // pixels per frame; adjust for faster/slower motion
-let offset = 0;
 let cardWidth = 0;
 let cardHeight = 0;
 
+let cardCount = 0;
 let cardGroup;
 
 // A flag to pause the conveyor belt
 let isPaused = false;
-let isSelected = false;
-let prevIsSelected = isSelected;
-let selectedCard;
-let cardPos = {};
-let cardDims = {};
-let clickCount = 0;
 
 // Append SVG to the container
 const svg = d3.select("#card-area")
@@ -33,44 +29,60 @@ const svg = d3.select("#card-area")
 // Create the <g> group that will hold all cards
 cardGroup = svg.append("g");
 
-function dragstarted() {
-   console.log("Drag started!")
-   d3.select(this).raise();
-   cardGroup.attr("cursor", "grabbing");
+function CrementCurrIndex(offset) 
+{
+   if (offset < 0) { cards[nextIndex].attr("display", "none"); }
+   else { cards[prevIndex].attr("display", "none"); }
+
+   currIndex += offset;
+   currIndex = currIndex % cardCount;
+   if (currIndex < 0) 
+   {
+      currIndex = (-currIndex) % cardCount; 
+      currIndex = cardCount - currIndex; 
+   }
+   nextIndex = (currIndex + 1) % cardCount;
+   prevIndex = currIndex - 1 < 0 ? cardCount - 1 : (currIndex - 1) % cardCount;
 }
 
-function dragged(event, d) {
-   console.log("Dragged!")
-   offset = event.y;
-   d3.select(this).attr("cy", d.y = event.y);
-}
+function UpdateCards() 
+{
+   let centerX = svgWidth / 2.0 - cardWidth / 2.0;
+   let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
 
-function dragended() {
-   console.log("Drag ended!")
-   cardGroup.attr("cursor", "grab");
+   cards[prevIndex]
+      .attr("x", centerX)
+      .attr("y", -(cardHeight * 2) / 3)
+      .attr("width", cardWidth)        // rectangle width
+      .attr("height", cardHeight)      // rectangle height
+      .attr("display", "block")
+   cards[currIndex]
+      .attr("x", centerX)
+      .attr("y", centerY)
+      .attr("width", cardWidth)        // rectangle width
+      .attr("height", cardHeight)      // rectangle height
+      .attr("display", "block")
+   cards[nextIndex]
+      .attr("x", centerX)
+      .attr("y", window.innerHeight - (cardHeight) / 3)
+      .attr("width", cardWidth)        // rectangle width
+      .attr("height", cardHeight)      // rectangle height
+      .attr("display", "block")
 }
 
 async function readCSV(csvFilePath) {
 
    try {
       var data = await d3.csv(csvFilePath);
-
-      cardWidth = svgWidth / 2.5;
-      cardHeight = cardWidth * 0.5714;
+      
+      cardCount = data.length;
 
       data.forEach(function(d, index) {
-         let centerX = svgWidth / 2.0 - cardWidth / 2.0;
-         let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
-
-         const row = Math.floor(index / cardsPerRow);
-         const col = index % cardsPerRow;
 
          names[String(d.Name)] = index;
 
          let card = cardGroup.append("image")
             .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
-            .attr("x", centerX)  // x-coordinate
-            .attr("y", index * cardHeight) // y-coordinate
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
         
@@ -78,69 +90,28 @@ async function readCSV(csvFilePath) {
          card.on('mouseout', function(d) { isPaused = false; });
 
          card.on('click', function(d) {
-            clickCount++;
-            switch(clickCount) 
+            if (cards[currIndex] !== card) { return; }
+            isFlipped = !isFlipped;
+            switch(isFlipped) 
             {
-               case 1:
-                  isSelected = true;
-                  selectedCard = card;
-                  cardGroup.selectAll("image")
-                     .filter(function() {
-                        return this !== selectedCard.node();
-                     })
-                     .attr("display", "none");
-                  cardPos[0] = card.attr("x");
-                  cardPos[1] = card.attr("y");
-                  cardDims[0] = card.attr("width");
-                  cardDims[1] = card.attr("height");
-                  selectedCard
-                     .attr("x", centerX)             // x-coordinate
-                     .attr("y", centerY - offset);             // y-coordinate
-                  break;
-               case 2:
-                  d3.select(this)
-                     .transition()
-                     .duration(500)
-                     .attr("transform", `translate(${svgWidth / 2.0 - 0.5}, ${svgHeight / 2.0 - 0.5}) scale(${1/cardWidth}, ${1/cardHeight})`)
-                     .transition()
-                     .duration(500)
-                     .attr("transform", `scale(${cardWidth / d3.select(this).attr("width")}, ${cardHeight / d3.select(this).attr("height")}) `)
-                     .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg");
-                  break;
-               case 3:
+               case false:
                   d3.select(this)
                      .transition()
                      .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg");
-                  cardGroup.selectAll("image")
-                     .filter(function() {
-                        return this !== selectedCard.node();  // Exclude the selected card
-                     })
-                     .attr("display", "block");
-                  selectedCard
-                     .attr("x", cardPos[0])           // x-coordinate
-                     .attr("y", cardPos[1])           // y-coordinate
-                     .attr("width", cardDims[0])      // rectangle width
-                     .attr("height", cardDims[1])     // rectangle height
-                     .attr("transform", "translate(0, 0)")
-                  isSelected = false;
-                  clickCount = 0;
+                  break;
+               case true:
+                  d3.select(this)
+                     .transition()
+                     .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
                   break;
             }
          });
-
+         svg.selectAll("image").attr("display", "none")
          cards[index] = card;
-         count++;
       });
 
-      svg
-         .data(data)
-         //.join("image")
-         .attr("cx", ({x}) => x)
-         .attr("cy", ({y}) => y)
-         .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
+      CrementCurrIndex(Math.floor(Math.random() * cardCount % cardCount));
+      UpdateCards();
 
       return data;
       
@@ -151,19 +122,20 @@ async function readCSV(csvFilePath) {
    
 }
 
-d3.timer((time) => {
-   if (isSelected) { return;}
-
-   //offset -= speed;
-
-   // const totalWidth = (cardWidth + cardSpacing) * cardsPerRow;
-
-   // // If we've scrolled past one full row of cards, reset offset
-   // if (Math.abs(offset) > totalWidth) {
-   //    offset = 0;
-   // }
-
-   cardGroup.attr("transform", `translate(0, ${offset})`);
+window.addEventListener("click", function(event) {
+   if (isPaused) { return; }
+   const y = event.clientY; // Y coordinate relative to the viewport
+   const screenHeight = window.innerHeight;
+ 
+   if (y < screenHeight / 2) {
+     console.log("Clicked top half of screen");
+     CrementCurrIndex(-1);
+     UpdateCards();
+   } else {
+     console.log("Clicked bottom half of screen");
+     CrementCurrIndex(1);
+     UpdateCards();
+   }
 });
 
 // Function to resize rectangle based on window size
@@ -171,36 +143,13 @@ function resize() {
    svgWidth = window.innerWidth;
    svgHeight = window.innerHeight;
 
-   cardWidth = svgWidth / 2.5;
+   cardWidth = svgWidth / xScale;
    cardHeight = cardWidth * 0.5714;
-
-   let centerX = svgWidth / 2.0 - cardWidth / 2.0;
-   let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
 
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
 
-   if (isSelected) 
-   {
-      selectedCard
-         .attr("x", centerX)             // x-coordinate
-         // .attr("y", centerY)             // y-coordinate
-         .attr("width", cardWidth)       // rectangle width
-         .attr("height", cardHeight)     // rectangle height
-   }
-   else 
-   {
-      for (let i = 0; i < count; i++) {
-         //const row = Math.floor(i / cardsPerRow);
-         //const col = i % cardsPerRow;
-   
-         cards[i]
-            .attr("x", centerX)  // x-coordinate
-            // .attr("y", i * cardHeight) // y-coordinate
-            .attr("width", cardWidth)      // rectangle width
-            .attr("height", cardHeight)     // rectangle height
-         }
-   }
+   UpdateCards();
 }
 
 readCSV("../Data/Business Cards.csv").then(() => {
