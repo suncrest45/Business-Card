@@ -33,6 +33,22 @@ const svg = d3.select("#card-area")
 // Create the <g> group that will hold all cards
 cardGroup = svg.append("g");
 
+const defs = svg.append("defs");
+
+const filter = defs.append("filter")
+   .attr("id", "card-shadow")
+   .attr("x", "-50%")
+   .attr("y", "-50%")
+   .attr("width", "200%")
+   .attr("height", "200%");
+
+filter.append("feDropShadow")
+.attr("dx", 5)
+.attr("dy", 5)
+.attr("stdDeviation", 4)
+.attr("flood-color", "#000")
+.attr("flood-opacity", 1.0);
+
 async function readCSV(csvFilePath) {
 
    try {
@@ -58,6 +74,7 @@ async function readCSV(csvFilePath) {
             .attr("y", row * (cardHeight + cardSpacing)) // y-coordinate
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
+            .style("filter", "url(#card-shadow)"); // ← this line adds the shadow
         
          card.on('mouseover', function(d) { isPaused = true; });
          card.on('mouseout', function(d) { isPaused = false; });
