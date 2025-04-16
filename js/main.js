@@ -1,12 +1,17 @@
 let svgWidth = window.innerWidth;
 let svgHeight = window.innerHeight;
 
+let animate = false;
+let isAnimating = false;
+
 let cards = {};
 let names = new Object();
 let currIndex = 0;
 let prevIndex = 0;
+let prevPrevIndex = 0;
 let nextIndex = 0;
 let isFlipped = false;
+let isGoingUp = false;
 
 let xScale = 3;
 
@@ -31,8 +36,11 @@ cardGroup = svg.append("g");
 
 function CrementCurrIndex(offset) 
 {
-   if (offset < 0) { cards[nextIndex].attr("display", "none"); }
-   else { cards[prevIndex].attr("display", "none"); }
+   let centerX = svgWidth / 2.0 - cardWidth / 2.0;
+   if (offset != 0) { animate = true; }
+   else { animate = false; }
+   if (offset < 0) { prevPrevIndex = nextIndex; isGoingUp = true; }
+   else if (offset > 0) { prevPrevIndex = prevIndex; isGoingUp = false; }
 
    currIndex += offset;
    currIndex = currIndex % cardCount;
@@ -43,6 +51,9 @@ function CrementCurrIndex(offset)
    }
    nextIndex = (currIndex + 1) % cardCount;
    prevIndex = currIndex - 1 < 0 ? cardCount - 1 : (currIndex - 1) % cardCount;
+
+   if (isGoingUp) { cards[prevIndex].attr("x", centerX).attr("y", -(cardHeight * 2) / 3 + window.innerHeight * 1.5); }
+   else if (animate) { cards[nextIndex].attr("x", centerX).attr("y", -window.innerHeight * 0.5 - (cardHeight) / 3); } //-(cardHeight * 2) / 3 - window.innerHeight * 1.5
 }
 
 function UpdateCards() 
@@ -51,41 +62,87 @@ function UpdateCards()
    let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
 
    cards[prevIndex]
-      .attr("x", centerX)
-      .attr("y", -(cardHeight * 2) / 3)
       .attr("width", cardWidth)        // rectangle width
       .attr("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[currIndex]
-      .attr("x", centerX)
-      .attr("y", centerY)
       .attr("width", cardWidth)        // rectangle width
       .attr("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[nextIndex]
-      .attr("x", centerX)
-      .attr("y", window.innerHeight - (cardHeight) / 3)
       .attr("width", cardWidth)        // rectangle width
       .attr("height", cardHeight)      // rectangle height
       .attr("display", "block")
+
+   if (animate) 
+   {
+      cards[prevIndex]
+         .transition()
+         .duration(1000)
+         .ease(d3.easeCubicInOut)
+         .attr("x", centerX)
+         .attr("y", window.innerHeight - (cardHeight) / 3)
+      cards[currIndex]
+         .transition()
+         .duration(1000)
+         .ease(d3.easeCubicInOut)
+         .attr("x", centerX)
+         .attr("y", centerY)
+      cards[nextIndex]
+         .transition()
+         .duration(1000)
+         .ease(d3.easeCubicInOut)
+         .attr("x", centerX)
+         .attr("y", -(cardHeight * 2) / 3);
+      
+      let animDest = isGoingUp ? -(cardHeight * 2) / 3 - window.innerHeight * 1.5 : -(cardHeight) / 3 + window.innerHeight * 1.5;//-window.innerHeight * 0.5 - (cardHeight) / 3
+
+      cards[prevPrevIndex]
+         .transition()
+         .duration(1000)
+         .on("start", function() {
+            isAnimating = true;
+          })
+         .ease(d3.easeCubicInOut)
+         .attr("x", centerX)
+         .attr("y",  animDest)
+         .on("end", function() {
+            cards[prevPrevIndex].attr("display", "none");
+            isAnimating = false;
+         });
+   }
 }
+
+const defs = svg.append("defs");
+
+const filter = defs.append("filter")
+   .attr("id", "card-shadow")
+   .attr("x", "-50%")
+   .attr("y", "-50%")
+   .attr("width", "200%")
+   .attr("height", "200%");
+
+filter.append("feDropShadow")
+   .attr("dx", 5)
+   .attr("dy", 5)
+   .attr("stdDeviation", 4)
+   .attr("flood-color", "#000")
+   .attr("flood-opacity", 1.0);
 
 async function readCSV(csvFilePath) {
 
    try {
       var data = await d3.csv(csvFilePath);
-      
       cardCount = data.length;
-
       data.forEach(function(d, index) {
-
          names[String(d.Name)] = index;
 
          let card = cardGroup.append("image")
             .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
-        
+            .style("filter", "url(#card-shadow)");
+
          card.on('mouseover', function(d) { isPaused = true; });
          card.on('mouseout', function(d) { isPaused = false; });
 
@@ -111,7 +168,24 @@ async function readCSV(csvFilePath) {
       });
 
       CrementCurrIndex(Math.floor(Math.random() * cardCount % cardCount));
-      UpdateCards();
+      cards[prevIndex]
+         .attr("x", centerX)
+         .attr("y", window.innerHeight - (cardHeight) / 3)
+         .attr("width", cardWidth)        // rectangle width
+         .attr("height", cardHeight)      // rectangle height
+         .attr("display", "block")
+      cards[currIndex]
+         .attr("x", centerX)
+         .attr("y", centerY)
+         .attr("width", cardWidth)        // rectangle width
+         .attr("height", cardHeight)      // rectangle height
+         .attr("display", "block")
+      cards[nextIndex]
+         .attr("x", centerX)
+         .attr("y", -(cardHeight * 2) / 3)
+         .attr("width", cardWidth)        // rectangle width
+         .attr("height", cardHeight)      // rectangle height
+         .attr("display", "block")
 
       return data;
       
@@ -123,16 +197,14 @@ async function readCSV(csvFilePath) {
 }
 
 window.addEventListener("click", function(event) {
-   if (isPaused) { return; }
+   if (isPaused || isAnimating) { return; }
    const y = event.clientY; // Y coordinate relative to the viewport
    const screenHeight = window.innerHeight;
  
    if (y < screenHeight / 2) {
-     console.log("Clicked top half of screen");
      CrementCurrIndex(-1);
      UpdateCards();
    } else {
-     console.log("Clicked bottom half of screen");
      CrementCurrIndex(1);
      UpdateCards();
    }
