@@ -19,7 +19,6 @@ let isGoingUp = false;
 
 let xScale = 3;
 
-const speed = 0.5; // pixels per frame; adjust for faster/slower motion
 let cardWidth = 0;
 let cardHeight = 0;
 
@@ -38,11 +37,11 @@ const svg = d3.select("#card-area")
 let title = d3.select("svg")
    .append("text")
    .text(titleText)
-   .attr("x", 50)                         // x-position
-   .attr("y", 100)                         // y-position
+   .attr("x", 40)                          // x-position
+   .attr("y", 80)                          // y-position
    .attr("fill", "steelblue")              // text color
    .attr("font-size", textSize + "px")     // font size
-   .attr("font-family", "Arial")           // font
+   .attr("font-family", "Helvetica")       // font
    .attr("text-anchor", "start")           // optional: center-align text
    .attr("display", textStatus)
    .style("user-select", "none");
@@ -69,13 +68,16 @@ function CrementCurrIndex(offset)
    prevIndex = currIndex - 1 < 0 ? cardCount - 1 : (currIndex - 1) % cardCount;
 
    if (isGoingUp) { cards[prevIndex].attr("x", centerX).attr("y", -(cardHeight * 2) / 3 + window.innerHeight * 1.5); }
-   else if (animate) { cards[nextIndex].attr("x", centerX).attr("y", -window.innerHeight * 0.5 - (cardHeight) / 3); } //-(cardHeight * 2) / 3 - window.innerHeight * 1.5
+   else if (animate) { cards[nextIndex].attr("x", centerX).attr("y", -window.innerHeight * 0.5 - (cardHeight) / 3); }
 }
 
 function UpdateCards() 
 {
    let centerX = svgWidth / 2.0 - cardWidth / 2.0;
    let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
+
+   if (cards[currIndex].attr("xlink:href").includes("_front.jpg")) { isFlipped = false; }
+   else { isFlipped = true; }
 
    cards[prevIndex]
       .attr("width", cardWidth)        // rectangle width
@@ -148,6 +150,9 @@ filter.append("feDropShadow")
 async function readCSV(csvFilePath) {
 
    try {
+      let centerX = svgWidth / 2.0 - cardWidth / 2.0;
+      let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
+      
       var data = await d3.csv(csvFilePath);
       cardCount = data.length;
       data.forEach(function(d, index) {
@@ -257,25 +262,21 @@ function resize() {
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
 
-   if (svgWidth < 1000) 
-   {
-      textStatus = "block";
-      
-      if (svgWidth < 400) 
+   textSize = 24;
+   textStatus = "block";
+   if (svgWidth < 1100) 
+   {  
+      if (svgWidth < 700) 
       {
          textStatus = "none";
       }
-      else if (svgWidth < 700) 
+      else if (svgWidth < 850) 
       {
-         textSize = 16;
-      }
-      else if (svgWidth < 900) 
-      {
-         textSize = 20;
+         textSize = 14;
       }
       else 
       {
-         textSize = 24;
+         textSize = 16;
       }
    }
    title
