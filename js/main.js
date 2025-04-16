@@ -170,12 +170,33 @@ async function readCSV(csvFilePath) {
                case false:
                   d3.select(this)
                      .transition()
-                     .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg");
+                     .duration(200)
+                     .ease(d3.easeCubic)
+                     .attr("width", 0)
+                     .on("end", function () {
+                        d3.select(this)
+                           .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
+                           .transition()
+                           .duration(200)
+                           .ease(d3.easeCubic)
+                           .attr("width", cardWidth);
+                     })
+                     
                   break;
                case true:
                   d3.select(this)
                      .transition()
-                     .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
+                     .duration(200)
+                     .ease(d3.easeCubic)
+                     .attr("width", 0)
+                     .on("end", function() {
+                        d3.select(this)
+                           .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
+                           .transition()
+                           .duration(200)
+                           .ease(d3.easeCubic)
+                           .attr("width", cardWidth);
+                     })
                   break;
             }
          });
