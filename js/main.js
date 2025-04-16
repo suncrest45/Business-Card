@@ -1,6 +1,10 @@
 let svgWidth = window.innerWidth;
 let svgHeight = window.innerHeight;
 
+const titleText = "Rabin's Cool Collection of Cards"
+let textSize = 24;
+let textStatus = "block";
+
 let animate = false;
 let isAnimating = false;
 
@@ -30,6 +34,18 @@ const svg = d3.select("#card-area")
    .append("svg")
    .attr("width", svgWidth)
    .attr("height", svgHeight);
+
+let title = d3.select("svg")
+   .append("text")
+   .text(titleText)
+   .attr("x", 50)                         // x-position
+   .attr("y", 100)                         // y-position
+   .attr("fill", "steelblue")              // text color
+   .attr("font-size", textSize + "px")     // font size
+   .attr("font-family", "Arial")           // font
+   .attr("text-anchor", "start")           // optional: center-align text
+   .attr("display", textStatus)
+   .style("user-select", "none");
 
 // Create the <g> group that will hold all cards
 cardGroup = svg.append("g");
@@ -193,7 +209,6 @@ async function readCSV(csvFilePath) {
       console.error("Error reading csv:", error);
       return [];
    }
-   
 }
 
 window.addEventListener("click", function(event) {
@@ -220,6 +235,31 @@ function resize() {
 
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
+
+   if (svgWidth < 1000) 
+   {
+      textStatus = "block";
+      
+      if (svgWidth < 400) 
+      {
+         textStatus = "none";
+      }
+      else if (svgWidth < 700) 
+      {
+         textSize = 16;
+      }
+      else if (svgWidth < 900) 
+      {
+         textSize = 20;
+      }
+      else 
+      {
+         textSize = 24;
+      }
+   }
+   title
+      .attr("font-size", textSize + "px")
+      .attr("display", textStatus);
 
    UpdateCards();
 }
