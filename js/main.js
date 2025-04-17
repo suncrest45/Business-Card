@@ -1,10 +1,6 @@
 let svgWidth = window.innerWidth;
 let svgHeight = window.innerHeight;
 
-const titleText = "Rabin's Cool Collection of Cards"
-let textSize = 24;
-let textStatus = "block";
-
 let animate = false;
 let isAnimating = false;
 
@@ -19,6 +15,7 @@ let isGoingUp = false;
 
 let xScale = 3;
 
+const speed = 0.5; // pixels per frame; adjust for faster/slower motion
 let cardWidth = 0;
 let cardHeight = 0;
 
@@ -28,23 +25,9 @@ let cardGroup;
 // A flag to pause the conveyor belt
 let isPaused = false;
 
-// Append SVG to the container
-const svg = d3.select("#card-area")
-   .append("svg")
-   .attr("width", svgWidth)
-   .attr("height", svgHeight);
 
-let title = d3.select("svg")
-   .append("text")
-   .text(titleText)
-   .attr("x", 40)                          // x-position
-   .attr("y", 80)                          // y-position
-   .attr("fill", "steelblue")              // text color
-   .attr("font-size", textSize + "px")     // font size
-   .attr("font-family", "Helvetica")       // font
-   .attr("text-anchor", "start")           // optional: center-align text
-   .attr("display", textStatus)
-   .style("user-select", "none");
+// Append SVG to the container
+const svg = d3.select("#card-area");
 
 // Create the <g> group that will hold all cards
 cardGroup = svg.append("g");
@@ -68,7 +51,7 @@ function CrementCurrIndex(offset)
    prevIndex = currIndex - 1 < 0 ? cardCount - 1 : (currIndex - 1) % cardCount;
 
    if (isGoingUp) { cards[prevIndex].attr("x", centerX).attr("y", -(cardHeight * 2) / 3 + window.innerHeight * 1.5); }
-   else if (animate) { cards[nextIndex].attr("x", centerX).attr("y", -window.innerHeight * 0.5 - (cardHeight) / 3); }
+   else if (animate) { cards[nextIndex].attr("x", centerX).attr("y", -window.innerHeight * 0.5 - (cardHeight) / 3); } //-(cardHeight * 2) / 3 - window.innerHeight * 1.5
 }
 
 function UpdateCards() 
@@ -76,20 +59,17 @@ function UpdateCards()
    let centerX = svgWidth / 2.0 - cardWidth / 2.0;
    let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
 
-   if (cards[currIndex].attr("xlink:href").includes("_front.jpg")) { isFlipped = false; }
-   else { isFlipped = true; }
-
    cards[prevIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[currIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[nextIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
 
    if (animate) 
@@ -147,6 +127,7 @@ filter.append("feDropShadow")
    .attr("flood-color", "#000")
    .attr("flood-opacity", 1.0);
 
+
 async function readCSV(csvFilePath) {
 
    try {
@@ -154,62 +135,47 @@ async function readCSV(csvFilePath) {
       let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
       
       var data = await d3.csv(csvFilePath);
+      
       cardCount = data.length;
+
       data.forEach(function(d, index) {
+         
          names[String(d.Name)] = index;
 
-         let card = cardGroup.append("image")
-            .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
+         cardWidth = svgWidth / xScale;
+         cardHeight = cardWidth * 0.5714;
+
+         let flipBox = cardGroup.append("div");
+         flipBox.classed("flip-box", true);
+         flipBox.style("width", cardWidth);
+         flipBox.style("height", cardHeight);
+
+         let flipBoxInner = flipBox.append("div");
+         flipBoxInner.classed("flip-box-inner", true);
+
+
+         let cardFront = flipBoxInner.append("img")
+            .attr("src", "../Data/" + d.Name + "_front.jpg")
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
             .style("filter", "url(#card-shadow)");
 
-         card.on('mouseover', function(d) { isPaused = true; });
-         card.on('mouseout', function(d) { isPaused = false; });
+            cardFront.classed("flip-box-front", true);
 
-         card.on('click', function(d) {
-            if (cards[currIndex] !== card) { return; }
-            isFlipped = !isFlipped;
-            switch(isFlipped) 
-            {
-               case false:
-                  d3.select(this)
-                     .transition()
-                     .duration(200)
-                     .ease(d3.easeCubic)
-                     .attr("width", 0)
-                     .on("end", function () {
-                        d3.select(this)
-                           .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
-                           .transition()
-                           .duration(200)
-                           .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
-                     })
-                     
-                  break;
-               case true:
-                  d3.select(this)
-                     .transition()
-                     .duration(200)
-                     .ease(d3.easeCubic)
-                     .attr("width", 0)
-                     .on("end", function() {
-                        d3.select(this)
-                           .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
-                           .transition()
-                           .duration(200)
-                           .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
-                     })
-                  break;
-            }
-         });
-         svg.selectAll("image").attr("display", "none")
-         cards[index] = card;
+         let cardBack = flipBoxInner.append("img")
+         .attr("src", "../Data/" + d.Name + "_back.jpg")
+         .attr("width", cardWidth)      // rectangle width
+         .attr("height", cardHeight)     // rectangle height
+         .style("filter", "url(#card-shadow)"); 
+
+         cardBack.classed("flip-box-back", true);
+
+        //svg.selectAll("image").attr("display", "none")
+         cards[index] = flipBox;
       });
 
       CrementCurrIndex(Math.floor(Math.random() * cardCount % cardCount));
+      
       cards[prevIndex]
          .attr("x", centerX)
          .attr("y", window.innerHeight - (cardHeight) / 3)
@@ -261,27 +227,6 @@ function resize() {
 
    svg.attr("width", svgWidth)
       .attr("height", svgHeight);
-
-   textSize = 24;
-   textStatus = "block";
-   if (svgWidth < 1100) 
-   {  
-      if (svgWidth < 700) 
-      {
-         textStatus = "none";
-      }
-      else if (svgWidth < 850) 
-      {
-         textSize = 14;
-      }
-      else 
-      {
-         textSize = 16;
-      }
-   }
-   title
-      .attr("font-size", textSize + "px")
-      .attr("display", textStatus);
 
    UpdateCards();
 }
