@@ -41,7 +41,7 @@ let title = d3.select("svg")
    .attr("y", 80)                          // y-position
    .attr("fill", "steelblue")              // text color
    .attr("font-size", textSize + "px")     // font size
-   .attr("font-family", "Helvetica")       // font
+   .attr("font-family", "Arial")       // font
    .attr("text-anchor", "start")           // optional: center-align text
    .attr("display", textStatus)
    .style("user-select", "none");
@@ -177,14 +177,21 @@ async function readCSV(csvFilePath) {
                      .transition()
                      .duration(200)
                      .ease(d3.easeCubic)
-                     .attr("width", 0)
+                     .attr("transform", "rotate(45)")
+                     .on("start", function(){
+                        isAnimating = true;
+                     })
                      .on("end", function () {
                         d3.select(this)
                            .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
                            .transition()
                            .duration(200)
                            .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
+                           .attr("transform", "rotate(0)")
+                           .on("end", function()
+                           {
+                              isAnimating = false;
+                           })
                      })
                      
                   break;
@@ -193,14 +200,21 @@ async function readCSV(csvFilePath) {
                      .transition()
                      .duration(200)
                      .ease(d3.easeCubic)
-                     .attr("width", 0)
+                     .attr("transform", "rotate(-45)")
+                     .on("start", function(){
+                        isAnimating = true;
+                     })
                      .on("end", function() {
                         d3.select(this)
                            .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
                            .transition()
                            .duration(200)
                            .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
+                           .attr("transform", "rotate(0)")
+                           .on("end", function()
+                           {
+                              isAnimating = false;
+                           })
                      })
                   break;
             }
