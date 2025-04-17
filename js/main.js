@@ -25,11 +25,9 @@ let cardGroup;
 // A flag to pause the conveyor belt
 let isPaused = false;
 
+
 // Append SVG to the container
-const svg = d3.select("#card-area")
-   .append("svg")
-   .attr("width", svgWidth)
-   .attr("height", svgHeight);
+const svg = d3.select("#card-area");
 
 // Create the <g> group that will hold all cards
 cardGroup = svg.append("g");
@@ -62,16 +60,16 @@ function UpdateCards()
    let centerY = window.innerHeight / 2.0 - cardHeight / 2.0;
 
    cards[prevIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[currIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
    cards[nextIndex]
-      .attr("width", cardWidth)        // rectangle width
-      .attr("height", cardHeight)      // rectangle height
+      .style("width", cardWidth)        // rectangle width
+      .style("height", cardHeight)      // rectangle height
       .attr("display", "block")
 
    if (animate) 
@@ -129,66 +127,52 @@ filter.append("feDropShadow")
    .attr("flood-color", "#000")
    .attr("flood-opacity", 1.0);
 
+
 async function readCSV(csvFilePath) {
 
    try {
       var data = await d3.csv(csvFilePath);
+      
       cardCount = data.length;
+
       data.forEach(function(d, index) {
+         
          names[String(d.Name)] = index;
 
-         let card = cardGroup.append("image")
-            .attr("xlink:href", "../Data/" + d.Name + "_front.jpg")
+         cardWidth = svgWidth / xScale;
+         cardHeight = cardWidth * 0.5714;
+
+         let flipBox = cardGroup.append("div");
+         flipBox.classed("flip-box", true);
+         flipBox.style("width", cardWidth);
+         flipBox.style("height", cardHeight);
+
+         let flipBoxInner = flipBox.append("div");
+         flipBoxInner.classed("flip-box-inner", true);
+
+
+         let cardFront = flipBoxInner.append("img")
+            .attr("src", "../Data/" + d.Name + "_front.jpg")
             .attr("width", cardWidth)      // rectangle width
             .attr("height", cardHeight)     // rectangle height
             .style("filter", "url(#card-shadow)");
 
-         card.on('mouseover', function(d) { isPaused = true; });
-         card.on('mouseout', function(d) { isPaused = false; });
+            cardFront.classed("flip-box-front", true);
 
-         card.on('click', function(d) {
-            if (cards[currIndex] !== card) { return; }
-            isFlipped = !isFlipped;
-            switch(isFlipped) 
-            {
-               case false:
-                  d3.select(this)
-                     .transition()
-                     .duration(200)
-                     .ease(d3.easeCubic)
-                     .attr("width", 0)
-                     .on("end", function () {
-                        d3.select(this)
-                           .attr("xlink:href", "../Data/" + data[index].Name + "_front.jpg")
-                           .transition()
-                           .duration(200)
-                           .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
-                     })
-                     
-                  break;
-               case true:
-                  d3.select(this)
-                     .transition()
-                     .duration(200)
-                     .ease(d3.easeCubic)
-                     .attr("width", 0)
-                     .on("end", function() {
-                        d3.select(this)
-                           .attr("xlink:href", "../Data/" + data[index].Name + "_back.jpg")
-                           .transition()
-                           .duration(200)
-                           .ease(d3.easeCubic)
-                           .attr("width", cardWidth);
-                     })
-                  break;
-            }
-         });
-         svg.selectAll("image").attr("display", "none")
-         cards[index] = card;
+         let cardBack = flipBoxInner.append("img")
+         .attr("src", "../Data/" + d.Name + "_back.jpg")
+         .attr("width", cardWidth)      // rectangle width
+         .attr("height", cardHeight)     // rectangle height
+         .style("filter", "url(#card-shadow)"); 
+
+         cardBack.classed("flip-box-back", true);
+
+        //svg.selectAll("image").attr("display", "none")
+         cards[index] = flipBox;
       });
 
       CrementCurrIndex(Math.floor(Math.random() * cardCount % cardCount));
+      
       cards[prevIndex]
          .attr("x", centerX)
          .attr("y", window.innerHeight - (cardHeight) / 3)
